@@ -63,21 +63,39 @@ pipeline {
             }
         }
 
-        stage('Deploy with Helm') {
+        stage('Register ArgoCD Application') {
             steps {
                 script {
-                    echo "🚀 Deploying to ${ENVIRONMENT}..."
+                    echo "📋 Registering ArgoCD application for ${ENVIRONMENT}..."
                     sh '''
-                        helm repo update || true
+                        APP_NAME="hello-service-${ENVIRONMENT}"
+                        ARGOCD_SERVER=${ARGOCD_SERVER:-localhost:6443}
                         
-                        helm upgrade --install hello-service ${HELM_CHART_PATH} \
-                            --namespace ${ENVIRONMENT} \
-                            --create-namespace \
-                            --values ${HELM_CHART_PATH}/values-${ENVIRONMENT}.yaml \
-                            --set image.tag=${IMAGE_TAG} \
-                            --set image.repository=${DOCKER_IMAGE} \
-                            --wait \
-                            --timeout 5m
+                        # Create ArgoCD application if it doesn't exist
+                        kubectl apply -f ./argocd/app-${ENVIRONMENT}.yaml || true
+                        
+                        echo "✅ ArgoCD application registered: $APP_NAME"
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy with ArgoCD') {
+            steps {
+                script {
+                    echo "🚀 Deploying to ${ENVIRONMENT} via ArgoCD..."
+                    sh '''
+                        APP_NAME="hello-service-${ENVIRONMENT}"
+                        
+                        # Update the image tag in ArgoCD application
+                        kubectl patch application $APP_NAME -n argocd \
+                            --type json -p='[{"op": "replace", "path": "/spec/source/helm/parameters/0/value", "value":"'${IMAGE_TAG}'"}]' || true
+                        
+                        # Trigger ArgoCD sync
+                        argocd app sync $APP_NAME --grpc-web || \
+                        kubectl patch application $APP_NAME -n argocd -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}' || true
+                        
+                        echo "✅ Deployment triggered via ArgoCD"
                     '''
                 }
             }
