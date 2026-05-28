@@ -32,6 +32,9 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            when {
+                expression { env.BUILD_DOCKER_IMAGE == 'true' }
+            }
             steps {
                 script {
                     echo "🔨 Building Docker image..."
