@@ -116,11 +116,8 @@ pipeline {
 
     post {
         always {
-            node('any') {
-                script {
-                    echo "🧹 Cleaning up..."
-                    sh 'docker system prune -f || true'
-                }
+            script {
+                echo "🧹 Cleaning up..."
             }
         }
         success {
