@@ -1,0 +1,30 @@
+replicaCount: 2
+
+image:
+  repository: hello-service
+  tag: "1.0.0"
+  pullPolicy: Never
+
+service:
+  port: 80
+  targetPort: 3000
+
+app:
+  nodeEnv: staging
+  version: "1.0.0"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+probes:
+  liveness:
+    initialDelaySeconds: 10
+    periodSeconds: 15
+  readiness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
