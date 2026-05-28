@@ -18,7 +18,7 @@ pipeline {
         REGISTRY = credentials('docker-registry-url')
         REGISTRY_CREDENTIALS = credentials('docker-registry-credentials')
         DOCKER_IMAGE = "${REGISTRY}/hello-service"
-        KUBECONFIG = credentials('kubeconfig')
+        KUBECONFIG = "${HOME}/.kube/config"
         HELM_CHART_PATH = './helm/hello-service'
     }
 
