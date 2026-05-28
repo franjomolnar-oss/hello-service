@@ -15,9 +15,8 @@ pipeline {
     }
 
     environment {
-        REGISTRY = credentials('docker-registry-url')
-        REGISTRY_CREDENTIALS = credentials('docker-registry-credentials')
-        DOCKER_IMAGE = "${REGISTRY}/hello-service"
+        REGISTRY = "docker.io"
+        DOCKER_IMAGE = "hello-service"
         KUBECONFIG = "${HOME}/.kube/config"
         HELM_CHART_PATH = './helm/hello-service'
     }
@@ -45,11 +44,14 @@ pipeline {
         }
 
         stage('Push Docker Image') {
+            when {
+                expression { env.REGISTRY_USER != null && env.REGISTRY_PASSWORD != null }
+            }
             steps {
                 script {
                     echo "📤 Pushing image to registry..."
                     sh '''
-                        echo ${REGISTRY_CREDENTIALS_PSW} | docker login -u ${REGISTRY_CREDENTIALS_USR} --password-stdin ${REGISTRY}
+                        echo ${REGISTRY_PASSWORD} | docker login -u ${REGISTRY_USER} --password-stdin ${REGISTRY}
                         docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
                         docker push ${DOCKER_IMAGE}:latest
                         docker logout ${REGISTRY}
